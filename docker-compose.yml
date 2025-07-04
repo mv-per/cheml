@@ -1,0 +1,76 @@
+services:
+  gateway:
+    image: nginx:latest
+    container_name: api-gateway
+    ports:
+      - "8050:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
+  simulation-api:
+    build:
+      context: .
+      dockerfile: docker/simulation-api/Dockerfile
+    image: simulation-api:latest
+    container_name: simulation-api
+    volumes:
+      - ./api-volume/storage:${BASE_PATH}
+    ports:
+      - "8031:8000"
+    environment:
+      - BASE_PATH=${BASE_PATH}
+      - CONDA_DEFAULT_ENV=neodustriadl
+      - PATH=/opt/conda/envs/neodustriadl/bin:$PATH
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
+
+    entrypoint: [ "/entrypoint.sh" ]
+    command: [ "uvicorn", "api.simulation.main:app", "--host", "0.0.0.0", "--port", "8000" ]
+  # Add design-api, production-api similarly...
+
+  openfoam-model-api:
+    build:
+      context: .
+      dockerfile: docker/openfoam-model-api/Dockerfile
+    image: openfoam-model-api:latest
+    container_name: openfoam-model-api
+    volumes:
+      - ./api-volume/storage:${BASE_PATH}
+    ports:
+      - "8201:8000"
+    entrypoint: [ "/entrypoint.sh" ]
+    command: [ "uvicorn", "api.openfoam_model.main:app", "--host", "0.0.0.0", "--port", "8000" ]
+
+  automotive-drag-api:
+    build:
+      context: .
+      dockerfile: docker/pytorch-model-api/Dockerfile
+    image: pytorch-model-api:latest
+    container_name: automotive-drag-api
+    volumes:
+      - ./api-volume/storage:${BASE_PATH}
+    environment:
+      - BASE_PATH=${BASE_PATH}
+      - MLFLOW_SERVER_USERNAME=${MLFLOW_SERVER_USERNAME}
+      - MLFLOW_SERVER_PASSWORD=${MLFLOW_SERVER_PASSWORD}
+      - MODEL_NAME=DragCoefficient_PointNetRegressor
+    command: [ "uvicorn", "api.pytorch_model.main:app", "--host", "0.0.0.0", "--port", "8101" ]
+    depends_on:
+      - simulation-api
+
+  automotive-lift-api:
+    build:
+      context: .
+      dockerfile: docker/pytorch-model-api/Dockerfile
+    image: pytorch-model-api:latest
+    container_name: automotive-lift-api
+    volumes:
+      - ./api-volume/storage:${BASE_PATH}
+    environment:
+      - BASE_PATH=${BASE_PATH}
+      - MLFLOW_SERVER_USERNAME=${MLFLOW_SERVER_USERNAME}
+      - MLFLOW_SERVER_PASSWORD=${MLFLOW_SERVER_PASSWORD}
+      - MODEL_NAME=LiftCoefficient_PointNetRegressor
+    command: [ "uvicorn", "api.pytorch_model.main:app", "--host", "0.0.0.0", "--port", "8102" ]
+    depends_on:
+      - simulation-api

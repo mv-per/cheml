@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cheml"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 0 - Alpha",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+]
+
+[tool.setuptools]
+packages = ["cheml"]
+package-dir = {"" = "src"}
+
+[tool.ruff.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
