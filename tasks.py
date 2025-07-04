@@ -48,9 +48,22 @@ def start_app(c):
     Args:
         c: The context instance for running shell commands.
     """
+
     app_dir = os.path.join(BASE_DIR, "src/cheml")
     with c.cd(BASE_DIR):
-        c.run(f"uvicorn {app_dir}/main.py:app --host 0.0.0.0 --port 8000")
+        c.run(f"python {app_dir}/main.py")
+
+
+@task
+def kill_app(c):
+    """
+    Kills the application process running on port 8001.
+
+    Args:
+        c: The context instance for running shell commands.
+    """
+
+    c.run("fuser -k 8001/tcp")
 
 
 @task
