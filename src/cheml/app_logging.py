@@ -12,7 +12,7 @@ def setup_logging(level: int = logging.INFO) -> None:
     os.makedirs(base_path, exist_ok=True)
 
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
@@ -30,3 +30,15 @@ def setup_logging(level: int = logging.INFO) -> None:
         level=level,
         handlers=[file_handler, stream_handler],
     )
+
+    # Overwrite FastAPI/uvicorn loggers to use the same handlers and level
+    for logger_name in (
+        "uvicorn",
+        "uvicorn.error",
+        "uvicorn.access",
+        "fastapi",
+    ):
+        logger = logging.getLogger(logger_name)
+        logger.handlers = [file_handler, stream_handler]
+        logger.setLevel(level)
+        logger.propagate = False
