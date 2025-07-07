@@ -15,7 +15,7 @@ Chemical engineering ML
 ## Installation
 
 ```bash
-git clone https://github.com/yourusername/cheml.git
+git clone https://github.com/mv-per/cheml.git
 cd cheml
 ```
 

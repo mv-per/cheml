@@ -8,6 +8,23 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 import os
 
+"""
+Manufacturing Quality Prediction API
+
+This module provides endpoints for predicting manufacturing quality based on process parameters.
+The prediction model uses a RandomForest regressor trained on historical manufacturing data
+to estimate quality ratings based on temperature, pressure, and material metrics.
+
+The route predicts the expected quality from a manufacturing batch based on the following variables:
+- Temperature (°C): Process temperature during manufacturing
+- Pressure (kPa): Process pressure during manufacturing
+- Temperature x Pressure: Interaction term (automatically calculated if not provided)
+- Material Fusion Metric: Measurement of material fusion quality
+- Material Transformation Metric: Measurement of material transformation quality
+
+The model returns a quality rating (0-100) along with an estimated prediction error.
+"""
+
 router = APIRouter(prefix="/manufacturing", tags=["manufacturing"])
 
 # Global variables for model caching
@@ -117,9 +134,40 @@ def load_model_and_scaler():
 @router.post("/predict-quality", response_model=QualityPrediction)
 async def predict_quality(input_data: ManufacturingInput):
     """
-    Predict manufacturing quality based on process parameters
+    Predict Manufacturing Quality for a Batch
 
-    Returns predicted quality rating and estimated error.
+    This endpoint predicts the expected quality rating for a manufacturing batch based on
+    process parameters. The prediction uses a trained RandomForest model that analyzes
+    the relationship between manufacturing conditions and final product quality.
+
+    **Input Parameters:**
+    - **temperature**: Process temperature in Celsius (-50 to 500°C)
+    - **pressure**: Process pressure in kilopascals (0 to 1000 kPa)
+    - **material_fusion_metric**: Measurement indicating material fusion quality (≥0)
+    - **material_transformation_metric**: Measurement indicating material transformation quality (≥0)
+    - **temperature_x_pressure**: Optional interaction term (auto-calculated if not provided)
+
+    **Returns:**
+    - **quality**: Predicted quality rating (0-100 scale)
+    - **error**: Estimated prediction uncertainty/error
+
+    **Example Request:**
+    ```json
+    {
+        "temperature": 220.5,
+        "pressure": 15.8,
+        "material_fusion_metric": 50000,
+        "material_transformation_metric": 10000000
+    }
+    ```
+
+    **Example Response:**
+    ```json
+    {
+        "quality": 99.8756,
+        "error": 0.1234
+    }
+    ```
     """
     try:
         # Load model and scaler (cached after first call)
@@ -172,7 +220,38 @@ async def predict_quality(input_data: ManufacturingInput):
 
 @router.get("/model-info")
 async def get_model_info():
-    """Get information about the loaded model"""
+    """
+    Get Manufacturing Quality Model Information
+
+    Returns detailed information about the currently loaded prediction model,
+    including model parameters, training metrics, and feature specifications.
+
+    **Returns:**
+    - **model_type**: Type of machine learning model (e.g., RandomForestRegressor)
+    - **n_estimators**: Number of trees in the random forest
+    - **max_depth**: Maximum depth of decision trees
+    - **training_error_mse**: Mean squared error from model training/testing
+    - **feature_names**: List of input features used by the model
+    - **scaler_type**: Type of preprocessing scaler used
+
+    **Example Response:**
+    ```json
+    {
+        "model_type": "RandomForestRegressor",
+        "n_estimators": 100,
+        "max_depth": 10,
+        "training_error_mse": 0.0123,
+        "feature_names": [
+            "Temperature (°C)",
+            "Pressure (kPa)",
+            "Temperature x Pressure",
+            "Material Fusion Metric",
+            "Material Transformation Metric"
+        ],
+        "scaler_type": "StandardScaler"
+    }
+    ```
+    """
     try:
         model, scaler, model_error = load_model_and_scaler()
 
