@@ -67,21 +67,10 @@ def kill_app(c):
 
 
 @task
-def build_api_image(c):
-    with c.cd(BASE_DIR):
-        c.run("sudo docker build -f docker/Dockerfile -t cheml-api .")
-
-
-@task
-def run_api_image(c, port=5000):
-    with c.cd(BASE_DIR):
-        c.run(f"sudo docker run -p 8000:{port} cheml-api")
-
-
-@task
 def start_mlflow(
     c, host: str = "localhost", port: int = 5000, store: bool = True
 ) -> None:
+    c.run("fuser -k 5000/tcp")
     cmd = f"mlflow server --host {host} --port {port}"
     if store:
         cmd += " --backend-store-uri sqlite:///local.db"

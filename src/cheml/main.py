@@ -5,9 +5,11 @@ from fastapi import FastAPI
 
 
 from cheml.app_logging import setup_logging
-
+from cheml.routes.manufacturing_quality import router as manufacturing_router
+import mlflow
 
 app = FastAPI()
+app.include_router(manufacturing_router, prefix="/manufacturing-quality")
 
 
 @app.get("/")
@@ -19,6 +21,9 @@ def initialize_app(app: FastAPI) -> None:
     # Perform any necessary initialization here
     setup_logging()
     logger = logging.getLogger("Initialization")
+
+    mlflow.set_tracking_uri("http://127.0.0.1:5000")
+    logger.info("MLflow tracking URI set to http://127.0.0.1:5000")
 
     logger.info("App initialized successfully.")
 
